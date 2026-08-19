@@ -3,6 +3,10 @@ name: Build Fenix APK
 on:
   workflow_dispatch:
 
+env:
+  FLET_CLI_NO_RICH_OUTPUT: "1"
+  PYTHONUTF8: "1"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,35 +20,46 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Set up Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.44.8"
           channel: "stable"
           cache: true
 
-      - name: Check Flutter
+      - name: Verify Flutter
         run: |
+          which flutter
           flutter --version
-          flutter doctor
+
+      - name: Accept Android licenses
+        run: |
+          yes | flutter doctor --android-licenses || true
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
       - name: Install Flet
-        run: pip install flet
+        run: pip install --upgrade "flet[all]"
+
+      - name: Verify Flet
+        run: |
+          flet --version
+          flet doctor
 
       - name: Build APK
-        run: flet build apk
+        run: flet build apk --clear-cache
 
       - name: Find APK
         run: |
-          echo "APK generado:"
-          find build -type f -name "*.apk"
+          echo "========== APK =========="
+          find . -type f -name "*.apk" -print
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: fenix-apk
-          path: build/**/*.apk
-          
+          path: |
+            build/**/*.apk
+            build/*.apk
+          if-no-files-found: error
