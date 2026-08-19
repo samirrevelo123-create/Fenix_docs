@@ -1,4 +1,4 @@
-name: Build Fenix APK
+name: Test Fenix Build
 
 on:
   workflow_dispatch:
@@ -21,16 +21,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet
 
+      - name: Check Flet version
+        run: |
+          flet --version
+          python -c "import flet.version; print('Flutter requerido:', flet.version.flutter_version)"
+
+      - name: Check Flutter
+        run: |
+          echo "PATH:"
+          echo "$PATH"
+          echo "Flutter:"
+          which flutter || true
+          flutter --version || true
+
+      - name: Check environment
+        run: |
+          echo "HOME=$HOME"
+          echo "FLET_CLI_NO_RICH_OUTPUT=$FLET_CLI_NO_RICH_OUTPUT"
+
       - name: Build APK
         env:
-          CI: "true"
           FLET_CLI_NO_RICH_OUTPUT: "1"
         run: |
-          flet build apk --yes
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: fenix-apk
-          path: build/**/*.apk
-          if-no-files-found: error
+          flet build apk --yes --verbose
